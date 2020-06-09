@@ -1,0 +1,4 @@
+io/newify/annotation/New.java
+ io.newify.annotation.New
+io/newify/processor/NewifyProcessor.java
+ io.newify.processor.NewifyProcessor

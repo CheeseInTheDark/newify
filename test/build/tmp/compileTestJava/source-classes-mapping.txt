@@ -1,0 +1,4 @@
+io/newify/test/NewifyTest.java
+ io.newify.test.NewifyTest
+io/newify/test/NoArgsConstructor.java
+ io.newify.test.NoArgsConstructor
