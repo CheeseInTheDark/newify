@@ -1,6 +1,11 @@
 package io.newify.processor;
 
+import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.JavaFile;
+import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.TypeSpec;
 import io.newify.annotation.New;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
@@ -11,13 +16,18 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.ElementFilter;
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
 import java.io.IOException;
-import java.io.Writer;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Stream;
+
+import static io.newify.processor.Casing.qualifiedNameToMethodName;
+import static io.newify.processor.Casing.toMethodCase;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toList;
+import static javax.lang.model.element.Modifier.PUBLIC;
 
 @SupportedAnnotationTypes("io.newify.annotation.New")
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
@@ -36,36 +46,54 @@ public class NewifyProcessor extends AbstractProcessor {
         Collection<? extends Element> elements = roundEnv.getElementsAnnotatedWith(New.class);
         List<ExecutableElement> constructors = ElementFilter.constructorsIn(elements);
 
-        StringBuilder builder = new StringBuilder();
+        List<MethodSpec> newMethods = constructors.stream()
+                .collect(groupingBy(ExecutableElement::getSimpleName))
+                .values().stream()
+                .flatMap(this::toNonConflictingMethods)
+                .collect(toList());
 
-        builder.append("package io.newify.generated;\n")
-                .append("public class New {\n");
-
-        constructors.forEach(constructor -> addConstructor(constructor, builder));
-
-        builder.append("}\n");
+        TypeSpec newClass = TypeSpec.classBuilder("New").addModifiers(PUBLIC).addMethods(newMethods).build();
 
         try {
-            JavaFileObject javaFileObject = processingEnv.getFiler().createSourceFile("io.newify.generated.New");
-            Writer writer = javaFileObject.openWriter();
-            writer.write(builder.toString());
-            writer.close();
-        } catch (IOException e) {
-            processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, e.getMessage());
-        }
+            JavaFile.builder("io.newify.generated", newClass).build().writeTo(processingEnv.getFiler());
+        } catch (IOException e) {}
 
         return true;
     }
 
-    private void addConstructor(ExecutableElement constructor, StringBuilder builder) {
-        TypeElement enclosingClass = (TypeElement) constructor.getEnclosingElement();
-        String qualifiedClassName = enclosingClass.getQualifiedName().toString();
-        String simpleClassName = enclosingClass.getSimpleName().toString();
-        String lowerCaseClassName = simpleClassName.substring(0, 1).toLowerCase() + simpleClassName.substring(1);
+    private Stream<MethodSpec> toNonConflictingMethods(List<ExecutableElement> constructorsWithSameSimpleName) {
+        Function<ExecutableElement, @Nullable MethodSpec> generateMethod = constructorsWithSameSimpleName.size() > 1 ?
+                this::generateQualifiedNewMethod : this::generateNewMethod;
 
-        builder.append("public ").append(qualifiedClassName).append(" ").append(lowerCaseClassName).append("() {\n")
-                .append("return new ").append(qualifiedClassName).append("();\n")
-                .append("}\n");
-
+        return constructorsWithSameSimpleName.stream().map(generateMethod);
     }
+
+    private MethodSpec generateNewMethod(ExecutableElement constructorElement) {
+        TypeElement constructorType = constructorType(constructorElement);
+        String methodName = toMethodCase(constructorType.getSimpleName().toString());
+        ClassName classToBeReturned = ClassName.get(constructorType);
+
+        return generateNewMethod(methodName, classToBeReturned);
+    }
+
+    private MethodSpec generateQualifiedNewMethod(ExecutableElement constructorElement) {
+        TypeElement constructorType = constructorType(constructorElement);
+        String methodName = qualifiedNameToMethodName(constructorType.getQualifiedName().toString());
+        ClassName classToBeReturned = ClassName.get(constructorType);
+
+        return generateNewMethod(methodName, classToBeReturned);
+    }
+
+    private TypeElement constructorType(ExecutableElement constructor) {
+        return (TypeElement) constructor.getEnclosingElement();
+    }
+
+    private MethodSpec generateNewMethod(String methodName, ClassName classToBeReturned) {
+        return MethodSpec.methodBuilder(methodName)
+                .addModifiers(PUBLIC)
+                .returns(classToBeReturned)
+                .addStatement("return new $T()", classToBeReturned)
+                .build();
+    }
+
 }
