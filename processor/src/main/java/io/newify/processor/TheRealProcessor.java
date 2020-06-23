@@ -6,6 +6,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
+import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -26,10 +27,15 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 public class TheRealProcessor {
 
     private final ProcessingEnvironment processingEnvironment;
+    private final InnerClassConstructor.Factory innerClassConstructorFactory;
+
     private boolean processed = false;
 
-    public TheRealProcessor(ProcessingEnvironment processingEnvironment) {
+    @Inject
+    public TheRealProcessor(ProcessingEnvironment processingEnvironment,
+                            InnerClassConstructor.Factory innerClassConstructorFactory) {
         this.processingEnvironment = processingEnvironment;
+        this.innerClassConstructorFactory = innerClassConstructorFactory;
     }
 
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
@@ -69,7 +75,7 @@ public class TheRealProcessor {
     }
 
     private Stream<InnerClassConstructor> toInnerClassConstructors(List<ExecutableElement> allConstructors) {
-        return allConstructors.stream().filter(this::isInInnerClass).map(InnerClassConstructor::new);
+        return allConstructors.stream().filter(this::isInInnerClass).map(innerClassConstructorFactory::create);
     }
 
     private boolean isInInnerClass(ExecutableElement constructor) {
