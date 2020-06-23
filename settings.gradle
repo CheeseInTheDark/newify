@@ -1,2 +1,2 @@
 rootProject.name = 'newify'
-include ':processor', ':test'
+include ':processor'

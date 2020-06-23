@@ -1,6 +1,12 @@
 io/newify/annotation/New.java
  io.newify.annotation.New
-io/newify/processor/NewifyProcessor.java
- io.newify.processor.NewifyProcessor
+io/newify/processor/NewMethod.java
+ io.newify.processor.NewMethod
 io/newify/processor/Casing.java
  io.newify.processor.Casing
+io/newify/processor/TheRealProcessor.java
+ io.newify.processor.TheRealProcessor
+io/newify/processor/InnerClassConstructor.java
+ io.newify.processor.InnerClassConstructor
+io/newify/processor/NewifyProcessor.java
+ io.newify.processor.NewifyProcessor

@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="io.newify.test.NewifyTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2020-06-09T20:37:54" hostname="applejack" time="0.031">
-  <properties/>
-  <testcase name="newOnEmptyConstructorAddsToNewClass" classname="io.newify.test.NewifyTest" time="0.031"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>
