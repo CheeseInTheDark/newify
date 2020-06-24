@@ -2,13 +2,13 @@ package io.newify.dagger;
 
 import dagger.BindsInstance;
 import dagger.Component;
-import io.newify.processor.TheRealProcessor;
+import io.newify.processor.NewifyProcessor;
 
 import javax.annotation.processing.ProcessingEnvironment;
 
-@Component(modules = NewifyModule.class)
+@Component()
 public interface NewifyComponent {
-    TheRealProcessor theRealProcess();
+    NewifyProcessor theRealProcessor();
 
     @Component.Builder
     interface Builder {

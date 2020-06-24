@@ -11,11 +11,11 @@ import javax.tools.JavaFileObject
 
 class NewifyProcessorIntegrationTest {
 
-    private lateinit var subject: NewifyProcessor
+    private lateinit var subject: NewifyProcessorMain
 
     @Before
     fun setUp() {
-        subject = NewifyProcessor()
+        subject = NewifyProcessorMain()
     }
 
     @Test
